@@ -64,23 +64,10 @@ def rectify_2view(rgb_i, rgb_j, R_irect, R_jrect, K_i, K_j, u_padding=20, v_padd
     K_j_corr[0, 2] -= u_padding
     K_j_corr[1, 2] -= vj_min + v_padding
 
-    """Student Code Starts"""
-    #rgb_i_rect = np.zeros((rgb_i.shape))
-    # print(rgb_i.shape)
-    # print(K_i.shape)
-    # print(K_i_corr.shape)
-    #for i in range(rgb_i.shape[0]):
-        #for j in range(rgb_i.shape[1]):
-            #B = R_irect @ np.linalg.inv(K_i) @ rgb_i[i,j,:]
-            #rgb_i_rect[i,j] = K_i_corr @ B
-
     H = K_i_corr @ R_irect @ np.linalg.inv(K_i)
     rgb_i_rect = cv2.warpPerspective(rgb_i, H, (w_max, h_max))
     H2 = K_j_corr @ R_jrect @ np.linalg.inv(K_j)
     rgb_j_rect = cv2.warpPerspective(rgb_j, H2, (w_max, h_max))
-
-
-    """Student Code Ends"""
 
     return rgb_i_rect, rgb_j_rect, K_i_corr, K_j_corr
 
@@ -99,19 +86,10 @@ def compute_right2left_transformation(R_wi, T_wi, R_wj, T_wj):
     [3,3], [3,1], float
         p_i = R_ji @ p_j + T_ji, B is the baseline
     """
-
-    """Student Code Starts"""
-    # p_i = R_wi @ p_w + T_wi
-    # p_j = R_wj @ p_w + T_wj
-    # writing p_j such that p_j = R @ p_j + T
-
-    # R_ji =  R_wj @ R_wi.T
-    # T_ji = -R_wj @ R_wi.T @ T_wi + T_wj
+    
     R_ji =  R_wi @ R_wj.T
     T_ji = -R_wi @ R_wj.T @ T_wj + T_wi
     B = np.linalg.norm((T_ji),2)
-
-    """Student Code Ends"""
 
     return R_ji, T_ji, B
 
@@ -130,25 +108,17 @@ def compute_rectification_R(T_ji):
     """
     # check the direction of epipole, should point to the positive direction of y axis
     e_i = T_ji.squeeze(-1) / (T_ji.squeeze(-1)[1] + EPS)
-    #print(e_i)
-    # ! Note, we define a small EPS at the beginning of this file, use it when you normalize each column
+   
+    # Define a small EPS at the beginning of this file, use it when you normalize each column
 
-    """Student Code Starts"""
     r2 = e_i
     r2 = r2/np.linalg.norm(r2)
     Tx = T_ji[0]
     Ty = T_ji[1]
     r1 = np.hstack((Ty, -Tx, 0))/np.sqrt(Tx**2 + Ty**2)
-    #print(r1.shape)
     r1 = r1/np.linalg.norm(r1)
     r3 = np.cross(r1,r2)
     R_irect = np.vstack((r1.T,r2.T,r3.T))
-    # print("r1",r1)
-    # print(r2.T)
-    # print(r3.T)
-    # print(R_irect)
-    
-    """Student Code Ends"""
 
     return R_irect
 
@@ -172,7 +142,6 @@ def ssd_kernel(src, dst):
     assert src.ndim == 3 and dst.ndim == 3
     assert src.shape[1:] == dst.shape[1:]
 
-    """Student Code Starts"""
     SSD = np.empty((src.shape[0], dst.shape[0], src.shape[2]))
     
     for i in range(src.shape[0]):
@@ -182,31 +151,7 @@ def ssd_kernel(src, dst):
             SSD[i,j,2] = np.sum(np.square(src[i,:,2]-dst[j,:,2]))
     
     ssd = np.sum(SSD, axis = 2)
-    # print("src",src.shape)
-    # print("dst",dst.shape)
-
-
-    # # err0 = np.subtract(src[:,:,0], dst[:,:,0])
-    # # err1 = np.subtract(src[:,:,1], dst[:,:,1])
-    # # err2 = np.subtract(src[:,:,2], dst[:,:,2])
-    # err0 = src[:,:,0] - dst[:,:,0]
-    # err1 = src[:,:,1] - dst[:,:,1]
-    # err2 = src[:,:,2] - dst[:,:,2]
-    # print("err",err0.shape)
-
-    # print("o",np.square(err0).shape)
-    # nnn = err0 @ err0.T
-    # print("p",nnn.shape)
-    # ERR = np.dstack((err0 @ err0.T, err1 @ err1.T, err2 @ err2.T))
-    # print("errr",ERR.shape)
-
-    # ssd = np.sum(ERR, axis = 2)
-    
-    
-    # print("ssd",ssd.shape)
-
-    """Student Code Ends"""
-
+ 
     return ssd  # M,N
 
 
@@ -229,8 +174,6 @@ def sad_kernel(src, dst):
     assert src.ndim == 3 and dst.ndim == 3
     assert src.shape[1:] == dst.shape[1:]
 
-    """Student Code Starts"""
-
     Sad = np.empty((src.shape[0], dst.shape[0], src.shape[2]))
     
 
@@ -241,38 +184,6 @@ def sad_kernel(src, dst):
             Sad[i,j,2] = np.sum(np.abs(src[i,:,2]-dst[j,:,2]))
     
     sad = np.sum(Sad, axis = 2)
-    # err0 = np.absolute(np.subtract(src[:,:,0], dst[:,:,0]))
-    # err1 = np.absolute(np.subtract(src[:,:,1], dst[:,:,1]))
-    # err2 = np.absolute(np.subtract(src[:,:,2], dst[:,:,2]))
-    # print("err",err0.shape)
-
-    # err0 = np.sqrt(np.matmul(err0, err0.T))
-    # # print("1")
-    # err1 = np.sqrt(np.matmul(err1, err1.T))
-    # err2 = np.sqrt(np.matmul(err2, err2.T))
-    # # print("2")
-
-    # Err0 = np.matmul(err0, err0)
-    # Err1 = np.matmul(err1, err1)
-    # Err2 = np.matmul(err2, err2)
-
-    # print("1_heyyyy", Err0.shape)
-
-
-    # ERR = np.dstack((Err0, Err1, Err2))
-    # # print("3")
-
-    # # print(ERR.shape)
-    # # ERR = np.sqrt(np.matmul(ERR, ERR.T))
-    # # print("errr",ERR.shape)
-
-
-    # sad = np.sum(ERR, axis = 2)
-    
-    
-    # print("sad",sad.shape)
-
-    """Student Code Ends"""
 
     return sad  # M,N
 
@@ -296,16 +207,10 @@ def zncc_kernel(src, dst):
     assert src.ndim == 3 and dst.ndim == 3
     assert src.shape[1:] == dst.shape[1:]
 
-    """Student Code Starts"""
     W_1 = np.mean(src, axis =1)
     W_2 = np.mean(dst, axis =1)
     sigma_W_1 = np.std(src, axis = 1)
     sigma_W_2 = np.std(dst, axis = 1)
-    # sigma_W_1_1 = np.std(src[:,:,1])
-    # sigma_W_2_1 = np.std(dst[:,:,1])
-    # sigma_W_1_2 = np.std(src[:,:,2])
-    # sigma_W_2_2 = np.std(dst[:,:,2])
-    
 
     ZNCC = np.zeros((src.shape[0], dst.shape[0], src.shape[2]))
     
@@ -320,17 +225,8 @@ def zncc_kernel(src, dst):
             numerator2 = np.sum(np.multiply(src[i,:,2]-W_1[i,2], dst[j,:,2]-W_2[j,2]))
             denominator2 = (np.multiply(sigma_W_1[i, 2], sigma_W_2[j, 2]) + EPS)
             ZNCC[i,j,2] = numerator2/denominator2
-
-    # zncc0 = np.matmul(np.subtract(src[:,:,0],W_1),np.subtract(dst[:,:,0],W_2).T)/(sigma_W_1_0*sigma_W_2_0 + EPS)
-    # zncc1 = np.matmul(np.subtract(src[:,:,1],W_1),np.subtract(dst[:,:,1],W_2).T)/(sigma_W_1_1*sigma_W_2_1 + EPS)
-    # zncc2 = np.matmul(np.subtract(src[:,:,2],W_1),np.subtract(dst[:,:,2],W_2).T)/(sigma_W_1_2*sigma_W_2_2 + EPS)
-    # print("zncc0",zncc0.shape)
-    # ERR = np.dstack((zncc0 , zncc1, zncc2))
     zncc = np.sum(ZNCC, axis = 2)
-
-    """Student Code Ends"""
-
-    # ! note here we use minus zncc since we use argmin outside, but the zncc is a similarity, which should be maximized
+    
     return zncc * (-1.0)  # M,N
 
 
@@ -348,51 +244,26 @@ def image2patch(image, k_size):
         The patch buffer for each pixel
     """
 
-    """Student Code Starts"""
     # patch_buffer = np.zeros((image.shape[0], image.shape[1], k_size**2, 3))
-    print(k_size)
 
     a = k_size/2
     a = int(a)
-    # padded1 = np.pad(image, a, mode='constant')
-    # print("reg",padded1.shape)
 
     p =  np.pad(image[:,:,0], a, mode='constant')
     q =  np.pad(image[:,:,1], a, mode='constant')
     r =  np.pad(image[:,:,2], a, mode='constant')
     padded = np.dstack ((p,q,r))
-    # print("3",padded.shape)
-    print("img",image.shape)
-    #print(patch_buffer.shape)
-
-    # K = k_size * k_size
-    #a = []
-    # pixel_patches = np.empty((image.shape[0], image.shape[1],k_size**2, 3))
     
     pixel_patches1= np.zeros((image.shape[0], image.shape[1],k_size**2))
     pixel_patches2 = np.zeros((image.shape[0], image.shape[1],k_size**2))
     pixel_patches3 = np.zeros((image.shape[0], image.shape[1],k_size**2))
-    # print(pixel_patches.shape)
-    print(pixel_patches1.shape)
+
     for i in range(a, padded.shape[0]- a):
         for j in range(a, padded.shape[1]- a):
-            # for k in range(3):
-            #     pixel_patches[i-a, j-a,:,k] = padded[i-a:i+a+1, j-a:j+a+1, :,k].flatten()
             pixel_patches1[i-a, j-a,:] = padded[i-a:i+a+1, j-a:j+a+1, 0].flatten()
             pixel_patches2[i-a, j-a,:] = padded[i-a:i+a+1, j-a:j+a+1, 1].flatten()
-            pixel_patches3[i-a, j-a,:] = padded[i-a:i+a+1, j-a:j+a+1, 2].flatten()
-            
-   # print(pixel_patches.shape)
+            pixel_patches3[i-a, j-a,:] = padded[i-a:i+a+1, j-a:j+a+1, 2].flatten()    
     patch_buffer = np.stack((pixel_patches1, pixel_patches2, pixel_patches3), axis =3)
-    # patch_buffer = pixel_patches
-    print(patch_buffer.shape)
-    #         for k in range(K):
-    #             if k_size % a == 0:
-    #                 patch_buffer[i,j,k,:] =  image[i,j,3]
-    #         #for k in range(a, k_size**2, k_size):
-    #            # patch_buffer[i,j,k,:] =  image[i,j,3]
-
-    """Student Code Starts"""
 
     return patch_buffer  # H,W,K**2,3
 
@@ -405,14 +276,13 @@ def compute_disparity_map(
     Parameters
     ----------
     rgb_i,rgb_j : [H,W,3]
-    d0 : see the hand out, the bias term of the disparty caused by different K matrix
+    d0 : the bias term of the disparty caused by different K matrix
     k_size : int, optional
         The patch size, by default 3
     kernel_func : function, optional
         the kernel used to compute the patch similarity, by default ssd_kernel
     img2patch_func : function, optional
-        this is for auto-grader purpose, in grading, we will use our correct implementation of the image2path function to exclude double count for errors in image2patch function
-
+        
     Returns
     -------
     disp_map: [H,W], dtype=np.float64
@@ -421,13 +291,9 @@ def compute_disparity_map(
     lr_consistency_mask: [H,W], dtype=np.float64
         For each pixel, 1.0 if LR consistent, otherwise 0.0
     """
-
-    """Student Code Starts"""
     
     h, w = rgb_i.shape[:2]
-   # disp_map = np.zeros((h,w), dtype = np.float64)
     disp_map = np.zeros((h,w), dtype = np.float64)
-    # lr_consistency_mask = np.zeros((h,w), dtype = np.float64)
     lr_consistency_mask = np.zeros((h,w), dtype = np.float64)
 
     patches_i = image2patch(rgb_i.astype(float) / 255.0, k_size)  # [h,w,k*k,3]
@@ -445,19 +311,9 @@ def compute_disparity_map(
         for v in range(h):
             best_matched_right_pixel = value[v].argmin()
             best_matched_left_pixel = value[:,best_matched_right_pixel].argmin()
-            #print(v, best_matched_left_pixel)
             consistent_flag = best_matched_left_pixel == v
-            #print(consistent_flag)
             disp_map[v,u] = disp_candidates[v, best_matched_right_pixel]
             lr_consistency_mask[v,u] = consistent_flag
-
-    
-    # disp_map = disp_map.T
-
-
-
-
-    """Student Code Ends"""
 
     return disp_map, lr_consistency_mask
 
@@ -482,8 +338,6 @@ def compute_dep_and_pcl(disp_map, B, K):
     [H,W,3]
         each pixel is the xyz coordinate of the back projected point cloud in camera frame
     """
-
-    """Student Code Starts"""
     f = K[1,1] 
     xyz_cam = np.zeros((disp_map.shape[0], disp_map.shape[1], 3))
     dep_map = (f*B)*np.reciprocal(disp_map)
@@ -493,7 +347,7 @@ def compute_dep_and_pcl(disp_map, B, K):
             x = (caliberated_coord[0]/caliberated_coord[2]) * dep_map[i,j]
             y = (caliberated_coord[1]/caliberated_coord[2]) * dep_map[i,j]
             xyz_cam[i,j] = [x, y, dep_map[i,j]]    
-    """Student Code Ends"""
+            
     return dep_map, xyz_cam
 
 
@@ -510,7 +364,6 @@ def postprocess(
     z_far=0.65,
 ):
     """
-    Your goal in this function is:
     given pcl_cam [N,3], R_wc [3,3] and T_wc [3,1]
     compute the pcl_world with shape[N,3] in the world coordinate
     """
@@ -549,15 +402,12 @@ def postprocess(
     pcl_cam = xyz_cam.reshape(-1, 3)[mask.reshape(-1) > 0]
     pcl_color = rgb.reshape(-1, 3)[mask.reshape(-1) > 0]
 
-    """Student Code Starts"""
     print(R_wc.shape)
     print(pcl_cam.shape)
     print(T_wc.shape)
     pworld_cl = np.matmul(R_wc.T,( pcl_cam.T - T_wc))
     pcl_world =pworld_cl.T
    
-    """Student Code Ends"""
-
     # np.savetxt("./debug_pcl_world.txt", np.concatenate([pcl_world, pcl_color], -1))
     # np.savetxt("./debug_pcl_rect.txt", np.concatenate([pcl_cam, pcl_color], -1))
 
